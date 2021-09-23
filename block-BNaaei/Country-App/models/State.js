@@ -6,7 +6,6 @@ let stateSchema = new Schema({
   name: String,
   country: { type: mongoose.Types.ObjectId, ref: 'Country' },
   neighbouring_states: [{ type: mongoose.Types.ObjectId, ref: 'State' }],
-
   population: Number,
   area: Number,
 });

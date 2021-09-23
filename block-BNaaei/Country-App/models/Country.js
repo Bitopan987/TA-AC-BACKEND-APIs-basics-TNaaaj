@@ -4,7 +4,7 @@ let Schema = mongoose.Schema;
 
 let countrySchema = new Schema({
   name: String,
-  states: [{ type: mongoose.Types.ObjectId, ref: 'State' }],
+  States: [{ type: mongoose.Types.ObjectId, ref: 'State' }],
   neighbouring_countires: [{ type: mongoose.Types.ObjectId, ref: 'Country' }],
   continent: String,
   population: Number,
