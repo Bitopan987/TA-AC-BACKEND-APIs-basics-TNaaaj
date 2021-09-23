@@ -1,68 +1,144 @@
 var express = require('express');
-var User = require('../models/User');
 var State = require('../models/State');
 var Country = require('../models/Country');
 var router = express.Router();
 
-//create new country
+//Get all country
 
-router.get('/', (req, res, next) => {
-  Country.find({}, (err, country) => {
-    if (err) return next(err);
-    res.status(200).json({ country });
-  });
+router.get('/', async (req, res, next) => {
+  try {
+    let countries = await Country.find({});
+    res.status(200).json({ countries });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post('/new', (req, res, next) => {
+// Save a country
+
+router.post('/', async (req, res, next) => {
   let data = req.body;
-  Country.create(data, (err, createdCountry) => {
-    if (err) return next(err);
+  data.ethnicity = data.ethnicity.trim().split(',');
+  try {
+    let createdCountry = await Country.create(data);
     res.status(200).json({ createdCountry });
-  });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// sort countries
+
+router.get('/list', async (req, res, next) => {
+  let type = req.query.type;
+  let list = type
+    ? await Country.find({}).sort({ name: type })
+    : await Country.find({});
+  res.json(list);
 });
 
 //update country
-router.get('/:id/update', (req, res, next) => {
+router.get('/:id/update', async (req, res, next) => {
   let countryId = req.params.id;
-
-  Country.findById(countryId, (err, country) => {
-    if (err) return next(err);
+  try {
+    let country = await Country.findById(countryId);
     res.json({ country });
-  });
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.post('/:id/update', (req, res, next) => {
+//delete country
+
+router.get('/:id/delete', async (req, res, next) => {
   let countryId = req.params.id;
-
-  let data = req.body;
-
-  Country.findByIdAndUpdate(countryId, data, (err, updatedCountry) => {
-    if (err) return next(err);
-    res.json({ updatedCountry });
-  });
+  try {
+    const deletedCountry = await Country.findByIdAndDelete(countryId);
+    res.json({ deletedCountry });
+  } catch (error) {
+    next(error);
+  }
 });
 
 //add state to country
 
-router.post('/:id/state/add', (req, res, next) => {
+router.post('/:id/state/add', async (req, res, next) => {
   let countryId = req.params.id;
-
   let data = req.body;
   data.country = countryId;
-  State.create(data, (err, createdState) => {
-    if (err) return next(err);
-
-    Country.findByIdAndUpdate(
-      countryId,
-      {
-        $push: { states: createdState.id },
-      },
-      (err, country) => {
-        if (err) return next(err);
-        res.json({ createdState, country });
-      }
-    );
-  });
+  try {
+    const createdState = await State.create(data);
+    const country = await Country.findByIdAndUpdate(countryId, {
+      $push: { States: createdState.id },
+    });
+    res.json({ createdState, country });
+  } catch (error) {
+    next(error);
+  }
 });
 
+//get all neighbouring countries
+
+router.get('/:id/neighbours', async (req, res, next) => {
+  let countryId = req.params.id;
+  try {
+    let neighbouringCountries = await Country.findById(countryId)
+      .populate('neighbouring_countires')
+      .exec((err, neighbouringCountries));
+    res.json({ neighbouringCountries });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put('/:id/neighbours/:neighbourId', async (req, res, next) => {
+  let countryId = req.params.id;
+  let neighbourId = req.params.neighbourId;
+  try {
+    const neighbouringCountries = await Country.findByIdAndUpdate(
+      countryId,
+      {
+        $addToSet: { neighbouring_countires: neighbourId },
+      },
+      { new: true }
+    );
+    res.json({ neighbouringCountries });
+  } catch (error) {
+    next(error);
+  }
+});
+
+//get list of all religions
+
+router.get('/list/religion', async (req, res, next) => {
+  try {
+    let listOfReligions = await Country.find({}).select('ethnicity -_id');
+    res.json({ listOfReligions });
+  } catch (error) {
+    next(error);
+  }
+});
+
+//list of countries based on religion
+
+router.get('/list/religion/:type', async (req, res, next) => {
+  let type = req.params.type;
+  try {
+    let countries = await Country.find({ ethnicity: type });
+    res.json({ countries });
+  } catch (error) {
+    next(error);
+  }
+});
+
+//list of countries based on continent
+router.get('/list/continent/:name', async (req, res, next) => {
+  let name = req.params.name;
+  try {
+    let countries = Country.find({ continent: name });
+    res.json({ countries });
+  } catch (error) {
+    next(error);
+  }
+});
 module.exports = router;
