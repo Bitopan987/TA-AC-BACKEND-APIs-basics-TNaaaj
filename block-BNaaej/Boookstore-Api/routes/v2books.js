@@ -69,7 +69,6 @@ router.get('/:id', async (req, res, next) => {
 router.post('/:id/comment/new', async (req, res, next) => {
   let bookId = req.params.id;
   let data = req.body;
-  data.createdBy = req.user.id;
   try {
     const createdComment = await Comment.create(data);
     let updatedBook = await Book.findByIdAndUpdate(bookId, {
@@ -86,8 +85,33 @@ router.post('/:id/comment/new', async (req, res, next) => {
 router.get('/:id/comments', async (req, res, next) => {
   let bookId = req.params.id;
   try {
-    let book = await Book.findById(bookId).populate('comments').exec;
+    let book = await Book.findById(bookId).populate('comments');
     res.json({ book });
+  } catch (error) {
+    next(error);
+  }
+});
+
+//edit a comment
+
+router.get('/:id/comment/edit/:commId', async (req, res, next) => {
+  let bookId = req.params.id;
+  let commentId = req.params.commId;
+  try {
+    const comment = await Comment.findById(commentId);
+    res.json({ comment });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.post('/:id/comment/edit/:commId', async (req, res, next) => {
+  let bookId = req.params.id;
+  let commentId = req.params.commId;
+  let data = req.body;
+  try {
+    let updatedComment = Comment.findByIdAndUpdate(commentId);
+    res.json({ updatedComment });
   } catch (error) {
     next(error);
   }
