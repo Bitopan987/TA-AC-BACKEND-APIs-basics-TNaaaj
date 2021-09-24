@@ -8,6 +8,7 @@ var mongoose = require('mongoose');
 var indexRouter = require('./routes/index');
 var v1booksRouter = require('./routes/v1books');
 var v2booksRouter = require('./routes/v2books');
+var v3booksRouter = require('./routes/v3books');
 
 // Connect with database
 mongoose.connect(
@@ -33,6 +34,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api', indexRouter);
 app.use('/api/v1/books', v1booksRouter);
 app.use('/api/v2/books', v2booksRouter);
+app.use('/api/v3/books', v3booksRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
